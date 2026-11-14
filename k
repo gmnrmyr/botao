@@ -1,0 +1,1 @@
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMxeSylxEDus/nnBU0YM+h4HycPuqcCb0w09XI0EE/ua casa-devices

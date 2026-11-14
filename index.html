@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Pânico">
+<meta name="theme-color" content="#0b0d12">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>Pânico</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: -apple-system, Roboto, system-ui, sans-serif; background: #0b0d12; color: #e8eaed; overflow: hidden; }
+  #app { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 10px; }
+  #top { height: 34px; line-height: 34px; font-size: 14px; color: #8b909a; overflow: hidden; white-space: nowrap; }
+  #top b { color: #e8eaed; }
+  #dot { display: inline-block; width: 10px; height: 10px; border-radius: 5px; background: #555; margin-right: 6px; }
+  #dot.on { background: #56d364; } #dot.off { background: #ff7b72; } #dot.meio { background: #e3b341; }
+  #gear { float: right; padding: 0 8px; font-size: 20px; color: #5b616b; }
+  #grid { position: absolute; top: 48px; left: 10px; right: 10px; bottom: 10px; }
+  .btn { position: absolute; border-radius: 18px; color: #fff; overflow: hidden; cursor: pointer; }
+  .btn .in { position: absolute; left: 0; right: 0; top: 50%; text-align: center; padding: 0 8px; }
+  .btn .emoji { font-size: 44px; line-height: 1.1; }
+  .btn .label { font-size: 19px; font-weight: 700; margin-top: 4px; }
+  .btn .auth { font-size: 13px; opacity: .8; margin-top: 2px; }
+  .btn .fill { position: absolute; left: 0; bottom: 0; width: 100%; height: 0; background: rgba(255,255,255,.35); }
+  .btn.hold .fill { height: 100%; -webkit-transition: height .9s linear; transition: height .9s linear; }
+  .t-medica { background: #c0392b; } .t-policial { background: #1f5fa8; }
+  .t-incendio { background: #d35400; } .t-silencioso { background: #3a3f4b; }
+  .kiosk .btn .emoji { font-size: 72px; } .kiosk .btn .label { font-size: 30px; } .kiosk .btn .auth { font-size: 18px; }
+  .ov { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #0b0d12; display: none; text-align: center; padding: 24px 18px; overflow: auto; z-index: 10; }
+  .ov h2 { font-size: 26px; margin: 18px 0 8px; }
+  .ov p { font-size: 16px; color: #b9c0cc; margin: 8px 0; -webkit-user-select: text; user-select: text; }
+  .big { font-size: 110px; font-weight: 800; line-height: 1.1; }
+  .act { display: block; width: 100%; border: 0; border-radius: 16px; padding: 22px 10px; margin: 14px 0 0; font-size: 22px; font-weight: 800; color: #fff; background: #2b303b; text-decoration: none; }
+  .act.red { background: #c0392b; } .act.green { background: #1e7d3c; } .act.small { font-size: 16px; padding: 14px; font-weight: 600; }
+  #alarm { background: #c0392b; }
+  #alarm.flash { background: #fff; color: #c0392b; }
+  #alarm.flash p { color: #c0392b; }
+  #alarm h2 { font-size: 40px; } #alarm p { font-size: 22px; color: #fff; }
+  input { width: 100%; background: #11151c; border: 1px solid #2a3140; color: #e8eaed; padding: 14px; border-radius: 12px; font-size: 15px; -webkit-user-select: text; user-select: text; }
+  #teste { display: none; position: absolute; left: 0; right: 0; bottom: 0; background: #b58900; color: #000; font-size: 12px; font-weight: 700; text-align: center; z-index: 20; padding: 2px; }
+  .hint { font-size: 12px; color: #5b616b; }
+  /* painel do tablet (só no kiosk, dados do servidor da casa no tópico -painel) */
+  #painel { display: none; position: absolute; top: 48px; left: 10px; right: 10px; background: #121620; border-radius: 18px; overflow: hidden; }
+  #painel .col { position: absolute; padding: 12px 18px; overflow: hidden; }
+  #pHora { font-size: 88px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
+  #pData { font-size: 22px; color: #b9c0cc; margin-top: 6px; }
+  #pTemp { font-size: 64px; font-weight: 800; line-height: 1; }
+  #pCeu { font-size: 22px; margin-top: 4px; }
+  #pMm { font-size: 18px; color: #b9c0cc; margin-top: 6px; }
+  #pAm { font-size: 15px; color: #8b909a; margin-top: 6px; }
+  #pR { font-size: 19px; line-height: 1.45; }
+  #pR .ok { color: #56d364; } #pR .pas { color: #6b717c; } #pR .hj { color: #ffb86b; font-weight: 700; }
+  #pCard { display: none; position: absolute; top: 0; bottom: 0; right: 0; background: #e3b341; color: #111; padding: 12px 18px; overflow: hidden; }
+  #pCard.bd { background: #2ea043; color: #fff; }
+  #pcT { font-size: 30px; font-weight: 800; line-height: 1.15; }
+  #pcM { font-size: 22px; margin-top: 4px; }
+  #pcB { display: block; width: 100%; border: 0; border-radius: 14px; padding: 26px 8px; margin-top: 12px; font-size: 32px; font-weight: 800; background: #111; color: #fff; }
+  #pcX { font-size: 14px; margin-top: 6px; opacity: .8; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top"><span id="gear">⚙</span><span id="dot"></span><b id="quem"></b> <span id="hint">· segure o botão 1 segundo</span> <span id="srv" style="font-size:12px;color:#8b949e"></span></div>
+  <div id="painel">
+    <div class="col" id="pL"><div id="pHora">--:--</div><div id="pData"></div></div>
+    <div class="col" id="pM"><div id="pTemp"></div><div id="pCeu">aguardando o servidor da casa…</div><div id="pMm"></div><div id="pAm"></div></div>
+    <div class="col" id="pR"></div>
+    <div id="pCard"><div id="pcT"></div><div id="pcM"></div><button id="pcB"></button><div id="pcX"></div></div>
+  </div>
+  <div id="grid"></div>
+</div>
+
+<div class="ov" id="setup">
+  <h2>🛡️ Botão de pânico</h2>
+  <div id="newDev">
+  <p>Este aparelho ainda não foi configurado.</p>
+  <p>Cole aqui o link (ou código) que o Gui mandou:</p>
+  <input id="code" placeholder="link ou código de instalação" autocomplete="off" autocapitalize="off">
+  <button class="act green" id="saveCode">Salvar</button>
+  </div>
+  <p class="hint" id="setupMsg"></p>
+  <div id="sub" style="display:none;text-align:left;background:#161a22;border-radius:12px;padding:12px;margin:10px 0">
+    <b>📲 Receber os alertas da família</b>
+    <ol style="margin:8px 0 8px 18px;padding:0;line-height:1.5">
+      <li>Instale o app <b>ntfy</b>: <a id="subStore" href="#" target="_blank" style="color:#7cc4ff">abrir loja</a></li>
+      <li>No app, toque em <b>+</b> e cole o nome abaixo. Toque em <b>Assinar</b>.</li>
+      <li>Nas notificações do ntfy, deixe <b>tocar mesmo no silencioso / Não Perturbe</b>.</li>
+    </ol>
+    <input id="subTopic" readonly style="font-size:13px">
+    <button class="act green" id="subCopy">Copiar nome</button>
+  </div>
+  <button class="act small" id="closeSetup" style="display:none">Ir para os botões</button>
+  <button class="act small" id="swapTeste" style="display:none"></button>
+</div>
+
+<div class="ov" id="count">
+  <h2 id="cTitle"></h2>
+  <p>Enviando em</p>
+  <div class="big" id="cNum">5</div>
+  <button class="act" id="cCancel">CANCELAR</button>
+  <button class="act red small" id="cNow">Enviar agora</button>
+</div>
+
+<div class="ov" id="sent">
+  <h2 id="sTitle"></h2>
+  <p id="sStatus"></p>
+  <a class="act red" id="sCall" href="#"></a>
+  <a class="act small" id="sShare" href="#" style="display:none;background:#1d4ed8">📲 AVISAR POR WHATSAPP / SMS</a>
+  <p class="hint" id="sWho"></p>
+  <button class="act green" id="sOk">FOI ENGANO / ESTOU BEM</button>
+  <button class="act small" id="sBack">Voltar aos botões</button>
+</div>
+
+<div class="ov" id="arm">
+  <h2>🔊 Sirene da casa</h2>
+  <p>Toque para armar a sirene deste tablet.</p>
+  <p class="hint">O navegador só deixa tocar som depois de um toque. Refazer sempre que o tablet reiniciar.</p>
+  <button class="act green" id="armBtn">ARMAR SIRENE</button>
+</div>
+
+<div class="ov" id="alarm">
+  <h2 id="aTitle"></h2>
+  <p id="aMsg"></p>
+  <a class="act" id="aCall" href="#" style="background:#000"></a>
+  <button class="act" id="aMute" style="background:#000">SILENCIAR SIRENE</button>
+</div>
+<div id="teste">MODO TESTE — não avisa ninguém de verdade</div>
+<div id="ios" style="display:none;position:absolute;left:8px;right:8px;top:8px;z-index:25;background:#1d4ed8;color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.35">
+  <b>Instalar no iPhone:</b> toque em <b>Compartilhar</b> (quadrado com seta) → <b>Adicionar à Tela de Início</b>.
+  Se o ícone abrir pedindo código, cole o mesmo link de novo.
+  <button id="iosOk" style="float:right;margin-top:6px;background:#fff;color:#1d4ed8;border:0;border-radius:6px;padding:4px 10px;font-weight:700">ok</button>
+</div>
+
+<script>
+/* ES5 de propósito: precisa rodar em tablet Android antigo. */
+var TYPES = [{"id":"medica","label":"Emergência médica","emoji":"🚑","authority":{"name":"SAMU","number":"192"},"messageTemplate":"🚑 EMERGÊNCIA MÉDICA — {nome} precisa de ajuda em {local} ({hora}). Se ninguém ligou ainda, ligue 192 (SAMU). {mapa} {nota}","silent":false},{"id":"policial","label":"Emergência policial","emoji":"🚓","authority":{"name":"Polícia Militar","number":"190"},"messageTemplate":"🚓 EMERGÊNCIA POLICIAL — {nome} acionou alerta em {local} ({hora}). Se ninguém ligou ainda, ligue 190 (Polícia Militar). Se puder, vá / ligue. {mapa} {nota}","silent":false},{"id":"incendio","label":"Incêndio / resgate","emoji":"🔥","authority":{"name":"Bombeiros","number":"193"},"messageTemplate":"🔥 INCÊNDIO/RESGATE — {nome} em {local} ({hora}). Se ninguém ligou ainda, ligue 193 (Bombeiros). {mapa} {nota}","silent":false},{"id":"silencioso","label":"Pânico silencioso (assalto/sequestro)","emoji":"🆘","authority":{"name":"Polícia Militar","number":"190"},"messageTemplate":"🆘 ALERTA SILENCIOSO — {nome} acionou pânico discreto em {local} ({hora}). Possível coação. NÃO ligue de volta — avalie e acione a PM 190. {mapa} {nota}","silent":true}];
+var VERSION = "7a5a724";
+var LS = "panico.cfg";
+var $ = function (id) { return document.getElementById(id); };
+var cfg = null, conns = [], vistos = [], armed = false, actx = null, sirenNodes = null, sirenTimer = null, flashTimer = null;
+
+function parseCfg(s) {
+  s = String(s || "").replace(/^\s+|\s+$/g, "");
+  var i = s.indexOf("#"); if (i >= 0) s = s.slice(i + 1);
+  var o = {}, parts = s.split("&"), n = 0;
+  for (var j = 0; j < parts.length; j++) {
+    var kv = parts[j].split("=");
+    if (kv.length === 2 && kv[0]) { try { o[kv[0]] = decodeURIComponent(kv[1]); n++; } catch (e) {} }
+  }
+  return o.k ? o : null;
+}
+function load() { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } }
+function save(o) { try { localStorage.setItem(LS, JSON.stringify(o)); } catch (e) {} }
+function show(id, on) { $(id).style.display = on ? "block" : "none"; }
+function server() { return (cfg.s || "https://ntfy.sh").replace(/\/+$/, ""); }
+function topic() { return cfg.k + (cfg.teste ? "-teste" : ""); }
+function isKiosk() { return cfg && cfg.kiosk === "1"; }
+function typeById(id) { for (var i = 0; i < TYPES.length; i++) if (TYPES[i].id === id) return TYPES[i]; return null; }
+function hora() { var d = new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+
+/* ---------- envio ---------- */
+/* Dois servidores: "s" (ntfy.sh, público) e "s2" (ntfy próprio da casa, sem cota) quando o link traz.
+   Pânico/cancelamento vão pros DOIS ao mesmo tempo: basta um aceitar. Coisas do painel (TOMEI) vão só
+   pro da casa. Token "tk" (plano pago do ntfy.sh, se um dia tiver) só vale no "s"; se recusar, tenta
+   sem token antes de dar erro. */
+function casaSrv() { return cfg.s2 ? cfg.s2.replace(/\/+$/, "") : server(); }
+function postTo(srv, body, tk, next) {
+  var x = new XMLHttpRequest(), fim = false;
+  x.open("POST", srv + "/", true);
+  x.timeout = 8000;
+  if (tk) { try { x.setRequestHeader("Authorization", "Bearer " + tk); } catch (e) {} }
+  x.onreadystatechange = function () { if (x.readyState === 4 && !fim) { fim = true; next(x.status >= 200 && x.status < 300, x.status); } };
+  try { x.send(JSON.stringify(body)); } catch (e) { fim = true; next(false, 0); }
+}
+function postPublico(body, cb) {
+  if (!cfg.tk) return postTo(server(), body, null, cb);
+  postTo(server(), body, cfg.tk, function (ok, st) { if (ok || st === 0) cb(ok, st); else postTo(server(), body, null, cb); });
+}
+function publish(body, cb, soCasa) {
+  if (soCasa) return postTo(casaSrv(), body, null, cb);
+  if (!cfg.s2) return postPublico(body, cb);
+  var falta = 2, deu = false, stPub = 0;
+  function fim(ok, st, publico) {
+    if (publico) stPub = st;
+    falta--;
+    if (ok && !deu) { deu = true; cb(true, st); }
+    else if (falta === 0 && !deu) cb(false, stPub);  /* status do ntfy.sh decide a mensagem (429 = limite) */
+  }
+  postPublico(body, function (ok, st) { fim(ok, st, true); });
+  postTo(casaSrv(), body, null, function (ok, st) { fim(ok, st, false); });
+}
+function getPos(cb) {
+  var done = false;
+  function fin(p) { if (!done) { done = true; cb(p); } }
+  if (isKiosk() || !navigator.geolocation) return fin(null);
+  setTimeout(function () { fin(null); }, 4000);
+  try {
+    navigator.geolocation.getCurrentPosition(
+      function (p) { fin(p.coords.latitude.toFixed(5) + "," + p.coords.longitude.toFixed(5)); },
+      function () { fin(null); }, { enableHighAccuracy: true, timeout: 3500, maximumAge: 60000 });
+  } catch (e) { fin(null); }
+}
+var sending = null;
+function fire(t) {
+  show("count", false); show("sent", true);
+  $("sTitle").textContent = t.emoji + " " + t.label;
+  $("sStatus").textContent = "Enviando…";
+  $("sCall").textContent = "📞 LIGAR " + t.authority.number + " (" + t.authority.name + ")";
+  $("sCall").href = "tel:" + t.authority.number;
+  $("sWho").textContent = t.silent ? "Alerta discreto: a sirene da casa NÃO toca." : "";
+  $("sShare").style.display = "none";
+  var id = String(new Date().getTime());
+  sending = { id: id, tries: 0 };
+  getPos(function (pos) {
+    var mapa = pos ? "https://maps.google.com/?q=" + pos : "";
+    var local = cfg.local || (pos ? "local no mapa" : "local não informado");
+    var msg = t.messageTemplate.replace("{nome}", cfg.eu || "Alguém").replace("{local}", local)
+      .replace("{hora}", hora()).replace("{mapa}", mapa).replace("{nota}", "").replace(/\s+$/, "");
+    var body = {
+      topic: topic(), title: (cfg.teste ? "[TESTE] " : "") + t.emoji + " " + t.label.toUpperCase() + " — " + (cfg.eu || "?"),
+      message: msg, priority: 5,
+      tags: ["panico", "tipo-" + t.id, "ev-" + id],
+      actions: [{ action: "view", label: "Ligar " + t.authority.number, url: "tel:" + t.authority.number }]
+    };
+    if (mapa) { body.click = mapa; body.actions.push({ action: "view", label: "Ver no mapa", url: mapa }); }
+    planoB(body.title + "\n" + msg);
+    (function attempt() {
+      if (!sending || sending.id !== id) return;
+      sending.tries++;
+      publish(body, function (ok, st) {
+        if (!sending || sending.id !== id) return;
+        if (ok) { $("sStatus").textContent = "✅ Alerta enviado às " + hora() + ". Agora LIGUE:"; sending.done = true; $("sShare").style.display = "none"; }
+        else {
+          // 429 = cota do ntfy.sh estourou nesse IP: não adianta martelar, e a família pode NÃO estar recebendo
+          $("sStatus").textContent = (st === 429 ? "⚠️ O servidor de alertas RECUSOU (limite)." : "⚠️ SEM INTERNET.") +
+            " Tentando de novo (" + sending.tries + ")… Avise pelo botão azul e LIGUE:";
+          $("sShare").style.display = "block";
+          setTimeout(attempt, st === 429 ? 15000 : 3000);
+        }
+      });
+    })();
+  });
+}
+/* plano B: se o ntfy falhar, a pessoa manda o mesmo texto por WhatsApp/SMS (compartilhar do sistema) */
+function planoB(txt) {
+  var a = $("sShare");
+  a.href = /iP(hone|ad|od)/.test(navigator.userAgent) ? "sms:&body=" + encodeURIComponent(txt) : "sms:?body=" + encodeURIComponent(txt);
+  a.onclick = function (e) {
+    if (navigator.share) { e.preventDefault(); try { navigator.share({ text: txt })["catch"](function () {}); } catch (x) {} }
+  };
+}
+function allClear() {
+  var s = sending; sending = null;
+  show("sent", false);
+  if (!s) return;
+  publish({ topic: topic(), title: (cfg.teste ? "[TESTE] " : "") + "✅ " + (cfg.eu || "?") + ": foi engano / está tudo bem",
+    message: "Alerta das " + hora() + " cancelado por " + (cfg.eu || "?") + ".", priority: 4, tags: ["panico", "cancelado", "ev-" + s.id] }, function () {});
+}
+
+/* ---------- contagem ---------- */
+var cTimer = null;
+function startCount(t) {
+  var n = 5;
+  $("cTitle").textContent = t.emoji + " " + t.label;
+  $("cNum").textContent = n; show("count", true);
+  function stop() { clearInterval(cTimer); cTimer = null; }
+  $("cCancel").onclick = function () { stop(); show("count", false); };
+  $("cNow").onclick = function () { stop(); fire(t); };
+  cTimer = setInterval(function () { n--; $("cNum").textContent = n; if (n <= 0) { stop(); fire(t); } }, 1000);
+}
+
+/* ---------- botões ---------- */
+function layout() {
+  var g = $("grid"), w = g.clientWidth, h = g.clientHeight, gap = 10;
+  var cols = (w > h * 1.2) ? 4 : (isKiosk() || w > 520 ? 2 : 1);
+  var rows = Math.ceil(TYPES.length / cols);
+  var bw = (w - gap * (cols - 1)) / cols, bh = (h - gap * (rows - 1)) / rows;
+  var kids = g.children;
+  for (var i = 0; i < kids.length; i++) {
+    var c = i % cols, r = Math.floor(i / cols), s = kids[i].style;
+    s.left = (c * (bw + gap)) + "px"; s.top = (r * (bh + gap)) + "px"; s.width = bw + "px"; s.height = bh + "px";
+    var inn = kids[i].querySelector(".in"); inn.style.marginTop = (-inn.offsetHeight / 2) + "px";
+  }
+}
+function build() {
+  var g = $("grid"); g.innerHTML = "";
+  for (var i = 0; i < TYPES.length; i++) (function (t) {
+    var b = document.createElement("div");
+    b.className = "btn t-" + t.id;
+    b.innerHTML = '<div class="fill"></div><div class="in"><div class="emoji">' + t.emoji + '</div><div class="label">' +
+      t.label.replace(/\s*\(.*\)/, "") + '</div><div class="auth">' + t.authority.name + " " + t.authority.number + "</div></div>";
+    var timer = null;
+    function down(e) { if (e && e.preventDefault) e.preventDefault(); if (timer) return; b.className += " hold";
+      timer = setTimeout(function () { up(); if (navigator.vibrate) navigator.vibrate(200); startCount(t); }, 900); }
+    function up() { if (timer) { clearTimeout(timer); timer = null; } b.className = "btn t-" + t.id; }
+    b.addEventListener("touchstart", down, false); b.addEventListener("touchend", up, false); b.addEventListener("touchcancel", up, false);
+    b.addEventListener("mousedown", down, false); b.addEventListener("mouseup", up, false); b.addEventListener("mouseleave", up, false);
+    b.addEventListener("contextmenu", function (e) { e.preventDefault(); }, false);
+    g.appendChild(b);
+  })(TYPES[i]);
+  layout();
+}
+
+/* ---------- kiosk: escuta o tópico e toca a sirene ---------- */
+function sirenStart() {
+  if (!actx || sirenNodes) return;
+  var o = actx.createOscillator(), gn = actx.createGain();
+  o.type = "square"; gn.gain.value = 1; o.connect(gn); gn.connect(actx.destination); o.start(0);
+  var hi = false;
+  function sweep() { hi = !hi; try { o.frequency.setValueAtTime(hi ? 1250 : 750, actx.currentTime); } catch (e) { o.frequency.value = hi ? 1250 : 750; } }
+  sweep(); sirenNodes = { o: o, iv: setInterval(sweep, 350) };
+  sirenTimer = setTimeout(sirenStop, 180000);
+}
+function sirenStop() {
+  if (sirenNodes) { clearInterval(sirenNodes.iv); try { sirenNodes.o.stop(0); } catch (e) {} sirenNodes = null; }
+  if (sirenTimer) { clearTimeout(sirenTimer); sirenTimer = null; }
+}
+function alarmOn(m, t) {
+  $("aTitle").textContent = m.title || "ALERTA"; $("aMsg").textContent = m.message || "";
+  $("aCall").textContent = t ? "📞 " + t.authority.name + " " + t.authority.number : "";
+  $("aCall").href = t ? "tel:" + t.authority.number : "#";
+  show("alarm", true);
+  if (!flashTimer) flashTimer = setInterval(function () { var a = $("alarm"); a.className = a.className.indexOf("flash") >= 0 ? "ov" : "ov flash"; }, 500);
+  sirenStart();
+}
+function alarmOff() { sirenStop(); if (flashTimer) { clearInterval(flashTimer); flashTimer = null; } show("alarm", false); }
+function onMsg(m) {
+  if (!m || m.event !== "message") return;
+  var tags = m.tags || [], has = function (x) { return tags.indexOf(x) >= 0; };
+  if (!has("panico")) return;
+  /* o mesmo alerta chega pelos 2 servidores: reage 1 vez por evento (inclusive o cancelamento) */
+  var ev = null;
+  for (var k = 0; k < tags.length; k++) if (tags[k].indexOf("ev-") === 0) ev = tags[k] + (has("cancelado") ? "-c" : "");
+  if (ev) { if (vistos.indexOf(ev) >= 0) return; vistos.push(ev); if (vistos.length > 50) vistos.shift(); }
+  if (has("cancelado")) { $("aTitle").textContent = "✅ CANCELADO"; $("aMsg").textContent = m.title || ""; sirenStop(); setTimeout(alarmOff, 8000); return; }
+  var t = null;
+  for (var i = 0; i < tags.length; i++) if (tags[i].indexOf("tipo-") === 0) t = typeById(tags[i].slice(5));
+  if (t && t.silent) return; /* discreto: tablet não reage */
+  alarmOn(m, t);
+}
+/* ---------- painel do tablet: relógio, clima, vencimentos, remédios + cartão de lembrete ---------- */
+var P = { dados: null, ok: {}, lemb: [], somTimer: null, pronto: false };
+var MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+var SEMANA = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+function pTopic() { return cfg.k + "-painel"; }
+function hojeStr() { var d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function relogio() {
+  var d = new Date();
+  $("pHora").textContent = hora();
+  $("pData").textContent = SEMANA[d.getDay()] + ", " + d.getDate() + " de " + MESES[d.getMonth()];
+}
+function renderPainel() {
+  var d = P.dados, hoje = d && d.dia === hojeStr(), c = d && d.clima, h = [], agora = hora();
+  if (c) {
+    $("pTemp").textContent = c.agora + "°"; $("pCeu").textContent = c.ceu + (c.nome ? " · " + c.nome : "");
+    $("pMm").innerHTML = "máx " + c.max + "° · mín " + c.min + "° · chuva " + c.chuva + "%" + (c.chuva >= 70 ? "<br><b style='color:#7cc4ff'>☔ leve guarda-chuva</b>" : "");
+    $("pAm").textContent = c.amanha ? "amanhã: " + c.amanha : "";
+  } else if (d) { $("pTemp").textContent = ""; $("pCeu").textContent = "clima indisponível"; $("pMm").textContent = ""; $("pAm").textContent = ""; }
+  if (d && hoje) {
+    if (d.bomdia) h.push(P.ok[d.bomdia.key] ? "<div class='ok'>☀️ bom dia ✓</div>" : "");
+    for (var i = 0; i < (d.rem || []).length; i++) {
+      var r = d.rem[i], feito = P.ok[r.key], passou = r.h < agora;
+      h.push("<div class='" + (feito ? "ok" : passou ? "pas" : "") + "'>💊 " + esc(r.h) + " " + esc(r.quem) + " · " + esc(r.nome) + (feito ? " ✓" : "") + "</div>");
+    }
+    for (var j = 0; j < (d.venc || []).length; j++) {
+      var v = d.venc[j];
+      h.push("<div class='" + (v.hoje ? "hj" : "") + "'>💳 " + esc(v.quando) + " · " + esc(v.nome) + "</div>");
+    }
+  }
+  $("pR").innerHTML = h.join("") || "<div class='pas'>" + (d ? "nada pra hoje 🙂" : "") + "</div>";
+  renderCard();
+}
+function renderCard() {
+  var agora = new Date().getTime() / 1000, l = null;
+  P.lemb = P.lemb.filter(function (x) { return !P.ok[x.key] && agora - x.t < 3 * 3600; });
+  l = P.lemb[0];
+  if (!l) { $("pCard").style.display = "none"; somParar(); return; }
+  var bd = l.key.indexOf("bd-") === 0;
+  $("pCard").className = bd ? "bd" : "";
+  $("pcT").textContent = l.title; $("pcM").textContent = bd ? "Toque se está tudo bem por aqui." : l.msg;
+  $("pcB").textContent = bd ? "☀️ ESTAMOS BEM" : "✅ TOMEI";
+  $("pcX").textContent = P.lemb.length > 1 ? "+" + (P.lemb.length - 1) + " lembrete(s) na fila" : "";
+  $("pCard").style.display = "block";
+  $("pcB").onclick = function () {
+    $("pcB").textContent = "enviando…";
+    publish({ topic: pTopic(), title: "ok", message: l.key, priority: 1, tags: ["ok", l.key] }, function (ok) {
+      if (ok) { P.ok[l.key] = true; renderPainel(); }
+      else { $("pcX").textContent = "⚠ não enviou (internet?). Toque de novo."; $("pcB").textContent = bd ? "☀️ ESTAMOS BEM" : "✅ TOMEI"; }
+    }, true);
+  };
+  somIniciar();
+}
+/* aviso suave: plim + voz a cada 90 s, por até 30 min (só se a sirene foi armada: navegador exige o toque) */
+function plim() {
+  if (!actx) return;
+  try {
+    var t0 = actx.currentTime, notas = [880, 1320];
+    for (var i = 0; i < 2; i++) {
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = "sine"; o.frequency.value = notas[i]; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0.0001, t0 + i * 0.35); g.gain.exponentialRampToValueAtTime(0.5, t0 + i * 0.35 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.35 + 0.6); o.start(t0 + i * 0.35); o.stop(t0 + i * 0.35 + 0.65);
+    }
+  } catch (e) {}
+}
+function falar(txt) {
+  try {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    var u = new SpeechSynthesisUtterance(txt); u.lang = "pt-BR"; u.rate = 0.9;
+    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function somIniciar() {
+  if (P.somTimer || !P.pronto) return;
+  var inicio = new Date().getTime();
+  function tocar() {
+    var l = P.lemb[0];
+    if (!l || new Date().getTime() - inicio > 30 * 60000) return somParar();
+    if (sirenNodes) return; /* sirene de pânico tocando: lembrete espera */
+    plim();
+    setTimeout(function () { falar(l.key.indexOf("bd-") === 0 ? "Bom dia! Toque em estamos bem." : l.title.replace(/💊|—/g, " ") + ". " + l.msg); }, 900);
+  }
+  tocar(); P.somTimer = setInterval(tocar, 90000);
+}
+function somParar() { if (P.somTimer) { clearInterval(P.somTimer); P.somTimer = null; } }
+function onPainel(m) {
+  if (!m || m.event !== "message") return;
+  var tags = m.tags || [], key = null;
+  for (var i = 0; i < tags.length; i++) if (/^(rem|bd)-/.test(tags[i])) key = tags[i];
+  if (tags.indexOf("painel") >= 0) { try { P.dados = JSON.parse(m.message); } catch (e) {} }
+  else if (tags.indexOf("ok") >= 0 && key) { P.ok[key] = true; }
+  else if (tags.indexOf("lembrete") >= 0 && key && !P.ok[key]) {
+    for (var j = 0; j < P.lemb.length; j++) if (P.lemb[j].key === key) key = null;
+    if (key) P.lemb.push({ key: key, title: m.title || "Lembrete", msg: m.message || "", t: m.time || new Date().getTime() / 1000 });
+  }
+  renderPainel();
+}
+/* abre já com o que o servidor mandou nas últimas 12 h (cache do ntfy.sh) */
+function loadPainel(cb) {
+  var x = new XMLHttpRequest();
+  x.open("GET", casaSrv() + "/" + pTopic() + "/json?poll=1&since=12h", true);
+  x.onreadystatechange = function () {
+    if (x.readyState !== 4) return;
+    var lines = String(x.responseText || "").split("\n");
+    for (var i = 0; i < lines.length; i++) { try { onPainel(JSON.parse(lines[i])); } catch (e) {} }
+    if (cb) cb();
+  };
+  try { x.send(); } catch (e) { if (cb) cb(); }
+}
+function layoutPainel() {
+  var p = $("painel"), W = $("app").clientWidth - 20, H = $("app").clientHeight - 58, land = W > H * 1.1;
+  var ph = Math.round(H * (land ? 0.42 : 0.38)), s = function (id, l, t, w, h) { var e = $(id).style; e.left = l; e.top = t; e.width = w; e.height = h; };
+  p.style.display = "block"; p.style.height = ph + "px";
+  $("grid").style.top = (48 + ph + 10) + "px";
+  if (land) { s("pL", "0", "0", "32%", "100%"); s("pM", "32%", "0", "28%", "100%"); s("pR", "60%", "0", "40%", "100%"); s("pCard", "32%", "0", "68%", "100%"); }
+  else { s("pL", "0", "0", "55%", "45%"); s("pM", "55%", "0", "45%", "45%"); s("pR", "0", "45%", "100%", "55%"); s("pCard", "0", "0", "100%", "100%"); }
+  var big = Math.min(88, Math.round(ph * (land ? 0.36 : 0.2)));
+  $("pHora").style.fontSize = big + "px"; $("pTemp").style.fontSize = Math.round(big * 0.72) + "px";
+}
+
+/* Uma conexão SSE por servidor. Com s2: ntfy.sh escuta só o pânico; o da casa escuta pânico + painel.
+   Cada uma tem seu batimento e reconecta sozinha (since=último id visto naquela conexão). */
+function conectar(c) {
+  if (c.es) { try { c.es.close(); } catch (e) {} }
+  var url = c.srv + "/" + c.topics.join(",") + "/sse" + (c.lastId ? "?since=" + c.lastId : "");
+  c.es = new EventSource(url); c.lastBeat = new Date().getTime(); c.up = false;
+  c.es.onopen = function () { c.up = true; c.lastBeat = new Date().getTime(); ponto(); };
+  c.es.onmessage = function (e) {
+    c.lastBeat = new Date().getTime();
+    try { var m = JSON.parse(e.data); if (m.id) c.lastId = m.id; if (m.topic === pTopic()) onPainel(m); else onMsg(m); } catch (x) {}
+  };
+  c.es.addEventListener("keepalive", function () { c.lastBeat = new Date().getTime(); }, false);
+  c.es.onerror = function () { c.up = false; ponto(); };
+}
+/* bolinha: verde = todos conectados, amarela = só um, vermelha = nenhum */
+function ponto() {
+  var n = 0; for (var i = 0; i < conns.length; i++) if (conns[i].up) n++;
+  $("dot").className = n === conns.length ? "on" : n ? "meio" : "off";
+}
+function listen() {
+  if (!window.EventSource) { $("dot").className = "off"; return; }
+  var comPainel = cfg.painel !== "0";
+  conns = cfg.s2
+    ? [{ srv: server(), topics: [topic()] }, { srv: casaSrv(), topics: comPainel ? [topic(), pTopic()] : [topic()] }]
+    : [{ srv: server(), topics: comPainel ? [topic(), pTopic()] : [topic()] }];
+  for (var i = 0; i < conns.length; i++) conectar(conns[i]);
+}
+function watchdog() {
+  for (var i = 0; i < conns.length; i++) if (new Date().getTime() - conns[i].lastBeat > 120000) conectar(conns[i]);
+}
+/* Batimento do servidor da casa (celular na tomada, extras/listener.py) no tópico <k>-hb.
+   Só vira alerta se ele já apareceu alguma vez neste tablet e sumiu por mais de 75 min. */
+function checkSrv() {
+  var x = new XMLHttpRequest();
+  x.open("GET", casaSrv() + "/" + cfg.k + "-hb/json?poll=1&since=3h", true);
+  x.onload = function () {
+    var lines = String(x.responseText || "").split("\n"), last = null;
+    for (var i = 0; i < lines.length; i++) { try { var m = JSON.parse(lines[i]); if (m.event === "message") last = m; } catch (e) {} }
+    var seen = null; try { seen = localStorage.getItem("panico.hb"); } catch (e) {}
+    if (last && new Date().getTime() / 1000 - last.time < 8000) {
+      try { localStorage.setItem("panico.hb", "1"); } catch (e) {}
+      $("srv").style.color = "#8b949e"; $("srv").textContent = "· casa ok " + (last.message || "");
+    } else if (seen) {
+      $("srv").style.color = "#ff7b72"; $("srv").textContent = "· ⚠ servidor da casa sem sinal (luzes/fotos não vão)";
+    }
+  };
+  try { x.send(); } catch (e) {}
+}
+
+/* ---------- configuração ---------- */
+function openSetup(msg) {
+  $("setupMsg").textContent = msg || (cfg ? "Configurado como: " + (cfg.eu || "?") + (isKiosk() ? " (tablet da parede)" : "") + " · v" + VERSION : "");
+  show("closeSetup", !!cfg); show("swapTeste", !!cfg); show("newDev", !cfg); show("sub", !!cfg && !isKiosk());
+  if (cfg) {
+    $("subTopic").value = cfg.k + (cfg.s ? "  (servidor " + cfg.s + ")" : "");
+    $("subStore").href = /iPhone|iPad|iPod/.test(navigator.userAgent)
+      ? "https://apps.apple.com/app/ntfy/id1625396347"
+      : "https://play.google.com/store/apps/details?id=io.heckel.ntfy";
+  }
+  if (cfg) $("swapTeste").textContent = cfg.teste ? "Sair do MODO TESTE" : "Entrar em MODO TESTE (treino)";
+  show("setup", true);
+}
+function start() {
+  var fromUrl = parseCfg(location.hash);
+  if (fromUrl) { save(fromUrl); }
+  cfg = load();
+  if (!cfg || !cfg.k) { cfg = null; return openSetup(); }
+  show("setup", false);
+  $("quem").textContent = cfg.eu || "";
+  $("teste").style.display = cfg.teste ? "block" : "none";
+  if (isKiosk()) {
+    document.body.className = "kiosk"; $("hint").textContent = "· tablet da casa";
+    if (!armed) show("arm", true);
+    if (cfg.painel !== "0") {
+      layoutPainel(); relogio(); setInterval(relogio, 10000); setInterval(renderPainel, 60000);
+      loadPainel(function () { P.pronto = true; renderCard(); listen(); });
+    } else listen();
+    setInterval(watchdog, 30000); checkSrv(); setInterval(checkSrv, 300000);
+  } else { $("dot").style.display = "none"; }
+  /* iOS: o ícone da tela de início tem armazenamento separado do Safari. */
+  if (fromUrl && /iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone) show("ios", true);
+  build();
+  /* 1ª vez num celular: já mostra como receber os alertas (depois fica na ⚙). */
+  var seen = null; try { seen = localStorage.getItem("panico.sub"); } catch (e) {}
+  if (!isKiosk() && seen !== cfg.k) {
+    try { localStorage.setItem("panico.sub", cfg.k); } catch (e) {}
+    openSetup("✅ Botão pronto neste celular (" + (cfg.eu || "?") + "). Falta receber os alertas:");
+  }
+}
+$("iosOk").onclick = function () { show("ios", false); };
+$("subCopy").onclick = function () {
+  var ok = function () { $("subCopy").textContent = "Copiado ✓ — agora cole no app ntfy"; };
+  var old = function () { var i = $("subTopic"); i.value = cfg.k; i.focus(); i.select(); try { document.execCommand("copy"); ok(); } catch (e) {} };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cfg.k).then(ok, old); else old();
+};
+$("saveCode").onclick = function () {
+  var o = parseCfg($("code").value);
+  if (!o) { $("setupMsg").textContent = "Código inválido. Cole o link inteiro."; return; }
+  save(o); location.hash = ""; location.reload();
+};
+$("closeSetup").onclick = function () { show("setup", false); };
+$("swapTeste").onclick = function () { cfg.teste = cfg.teste ? "" : "1"; save(cfg); location.hash = ""; location.reload(); };
+$("gear").onclick = function () { openSetup(); };
+$("sOk").onclick = allClear;
+$("sBack").onclick = function () { show("sent", false); };
+$("aMute").onclick = alarmOff;
+$("armBtn").onclick = function () {
+  try { var AC = window.AudioContext || window.webkitAudioContext; actx = new AC(); if (actx.resume) actx.resume();
+    var o = actx.createOscillator(), g = actx.createGain(); g.gain.value = 0.2; o.connect(g); g.connect(actx.destination); o.start(0); o.stop(actx.currentTime + 0.25);
+  } catch (e) {}
+  armed = true; show("arm", false);
+  var d = document.documentElement, fs = d.requestFullscreen || d.webkitRequestFullscreen;
+  if (fs) { try { var pr = fs.call(d); if (pr && pr["catch"]) pr["catch"](function () {}); } catch (e) {} }
+};
+window.addEventListener("resize", function () { if (cfg) { if (isKiosk() && cfg.painel !== "0") layoutPainel(); layout(); } }, false);
+if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("sw.js"); } catch (e) {} }
+start();
+</script>
+</body>
+</html>
